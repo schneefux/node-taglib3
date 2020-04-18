@@ -79,3 +79,8 @@ add_dependencies(${PROJECT_NAME} taglib)
 # link TagLib and cmakejs
 #
 target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB} tag)
+
+#
+# define NAPI_VERSION
+#
+add_definitions(-DNAPI_VERSION=3)
