@@ -1,6 +1,6 @@
 # node-taglib3
 
-A fork of [node-taglib2](https://github.com/voltraco/node-taglib2) for Node 12 and taglib 1.11.1 with support for non-standard properties.
+A rewrite of [node-taglib2](https://github.com/voltraco/node-taglib2) for Node 10 to 13 and taglib 1.11.1 with support for non-standard properties and a non-blocking API.
 
 ## Installation
 
@@ -19,8 +19,6 @@ For example, with electron:
 ELECTRON=1 npm install
 ```
 
-Only absolute file paths are supported (a PR for a bug fix would be welcome).
-
 ### Writing tags
 
 Specify an object of tag names and tag entries to (over) write. Tag entries must be arrays of strings. Not all file formats support multiple entries.
@@ -29,7 +27,6 @@ See the [taglib documentation](https://taglib.org/api/classTagLib_1_1PropertyMap
 
 ```js
 const taglib = require('taglib2')
-const path = require('path')
 
 const props = {
   artist: ['Howlin\' Wolf'],
@@ -37,7 +34,10 @@ const props = {
   my_own_special_attribute: ['datadatadata']
 }
 
-taglib.writeTagsSync(path.join(__dirname, 'file.mp3'), props)
+// sync
+taglib.writeTagsSync('file.mp3', props)
+// async
+taglib.writeTags('file.mp3', props, (error, data) => console.log(error, data))
 ```
 
 ### Reading tags
@@ -45,7 +45,10 @@ taglib.writeTagsSync(path.join(__dirname, 'file.mp3'), props)
 ```js
 const taglib = require('taglib2')
 const path = require('path')
-const tags = taglib.readTagsSync(path.join(__dirname, 'file.mp3'))
+// sync
+const tags = taglib.readTagsSync('file.mp3')
+// async
+const tags = taglib.readTags('file.mp3', (error, data) => console.log(error, data))
 ```
 
 ```json
