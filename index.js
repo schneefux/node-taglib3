@@ -1,4 +1,4 @@
-const binding = require('./build/Release/taglib2')
+const binding = require('./build/Release/taglib3')
 const normalize = require('path').normalize
 
 exports.writeTagsSync = (path, options) => {

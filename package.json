@@ -1,10 +1,10 @@
 {
-  "name": "taglib2",
-  "version": "2.9.6",
-  "description": "taglib version2 bindings",
+  "name": "taglib3",
+  "version": "3.0.0",
+  "description": "taglib bindings",
   "repository": {
     "type": "git",
-    "url": "git@github.com:voltraco/node-taglib2.git"
+    "url": "git@github.com:schneefux/node-taglib3.git"
   },
   "scripts": {
     "test": "tape tests",
@@ -18,8 +18,6 @@
     "npm-run-path": "^2.0.2"
   },
   "devDependencies": {
-    "mkdirp": "^0.5.1",
-    "rimraf": "^2.5.2",
     "tape": "*"
   }
 }

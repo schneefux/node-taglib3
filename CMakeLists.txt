@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
-project (taglib2)
+project (taglib3)
 
 #
 # a relatively stable snapshot of taglib2 branch for our purposes.
@@ -64,7 +64,7 @@ link_directories(${CMAKE_SOURCE_DIR}/taglib/lib)
 include_directories(BEFORE ${CMAKE_JS_INC} ${CMAKE_SOURCE_DIR}/taglib/include)
 
 #
-# node-taglib2 specifics
+# node-taglib3 specifics
 #
 file(GLOB SOURCE_FILES "src/*.cc" "src/*.h")
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
