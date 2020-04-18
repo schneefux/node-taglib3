@@ -19,6 +19,8 @@ For example, with electron:
 ELECTRON=1 npm install
 ```
 
+Only absolute file paths are supported (a PR for a bug fix would be welcome).
+
 ### Writing tags
 
 Specify an object of tag names and tag entries to (over) write. Tag entries must be arrays of strings. Not all file formats support multiple entries.
@@ -27,7 +29,7 @@ See the [taglib documentation](https://taglib.org/api/classTagLib_1_1PropertyMap
 
 ```js
 const taglib = require('taglib2')
-const fs = require('fs')
+const path = require('path')
 
 const props = {
   artist: ['Howlin\' Wolf'],
@@ -35,14 +37,15 @@ const props = {
   my_own_special_attribute: ['datadatadata']
 }
 
-taglib.writeTagsSync('./file.mp3', props)
+taglib.writeTagsSync(path.join(__dirname, 'file.mp3'), props)
 ```
 
 ### Reading tags
 
 ```js
 const taglib = require('taglib2')
-const tags = taglib.readTagsSync('./file.mp3')
+const path = require('path')
+const tags = taglib.readTagsSync(path.join(__dirname, 'file.mp3'))
 ```
 
 ```json

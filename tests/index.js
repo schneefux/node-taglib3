@@ -49,7 +49,7 @@ function onReady () {
 
     const tags = taglib3.readTagsSync(audiopath)
 
-    assert.equal(tags.ARTIST, ['å æ ø ö ä ù ó ð ärtist'])
+    assert.equal(tags.ARTIST[0], 'å æ ø ö ä ù ó ð ärtist')
     assert.end()
   })
 }
