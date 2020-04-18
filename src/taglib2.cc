@@ -102,145 +102,28 @@ NAN_METHOD(writeTagsSync) {
     return;
   }
 
-  bool hasProps = false;
-
-  auto hasOption = [&](
-    Local<v8::Object> o,
-    const std::string name) -> bool {
-    v8::Maybe<bool> maybe_result = o->Has(Nan::GetCurrentContext(), Nan::New(name).ToLocalChecked());
-
-    if(maybe_result.IsNothing()) {
-      return false;
-    } else {
-      return maybe_result.ToChecked();
-    }
-  };
-
-  auto getOptionString = [&](
-      Local<v8::Object> o,
-      const std::string name) -> TagLib::String {
-
-    auto r = o->Get(Nan::GetCurrentContext(), Nan::New(name).ToLocalChecked());
-
-    std::string st = *v8::String::Utf8Value(v8::Isolate::GetCurrent(), r.ToLocalChecked());
-    return StringToTagLibString(st);
-  };
-
-  auto getOptionInt = [&](
-      Local<v8::Object> o,
-      const std::string name) -> int {
-
-    auto v = o->Get(Nan::GetCurrentContext(), Nan::New(name).ToLocalChecked());
-
-    Nan::Maybe<int> maybe = Nan::To<int32_t>(v.ToLocalChecked());
-
-    return maybe.ToChecked();
-  };
-
-	string common_props[8] = {"artist", "title", "album", "comment", "genre", "year", "track", "pictures"};
-
-	Local<Array> property_names = options->GetOwnPropertyNames();
-	for (int i = 0; i < property_names->Length(); ++i) {
+  // TODO type check
+  Local<Array> property_names = options->GetOwnPropertyNames(Nan::GetCurrentContext()).ToLocalChecked();
+  for (int i = 0; i < property_names->Length(); ++i) {
     auto key = property_names->Get(Nan::New(i));
-    std::string key_utf = *v8::String::Utf8Value(key);
 
-		bool isCommon = false;
+    TagLib::StringList list = TagLib::StringList();
+    auto input_array = options->Get(Nan::GetCurrentContext(), key).ToLocalChecked().As<v8::Array>();
+    for (int j = 0; j < input_array->Length(); ++j) {
+      auto value = *Nan::Utf8String(input_array->Get(Nan::GetCurrentContext(), j).ToLocalChecked());
+      TagLib::String st = TagLib::String(value);
+      list.append(st);
+    }
 
-		for (int i = 0; i < 8; i++) {
-			if (key_utf.compare(common_props[i]) == 0)
-		    isCommon = true;
-		}
+    auto list_key = *Nan::Utf8String(key);
+    map.erase(TagLib::String(list_key));
+    map.insert(TagLib::String(list_key), list);
+  }
 
-		if (!isCommon) {
-			hasProps = true;
-
-	    TagLib::String value = getOptionString(options, key_utf);
-
-	    map.erase(TagLib::String(TagLib::String(key_utf).upper()));
-	    map.insert(TagLib::String(TagLib::String(key_utf).upper()), value);
-		}
-	}
-
-  if (hasProps) {
+  if (map.size() > 0) {
     f.setProperties(map);
+    f.save();
   }
-
-  if (hasOption(options, "artist")) {
-    tag->setArtist(getOptionString(options, "artist"));
-  }
-
-  if (hasOption(options, "title")) {
-    tag->setTitle(getOptionString(options, "title"));
-  }
-
-  if (hasOption(options, "album")) {
-    tag->setAlbum(getOptionString(options, "album"));
-  }
-
-  if (hasOption(options, "comment")) {
-    tag->setComment(getOptionString(options, "comment"));
-  }
-
-  if (hasOption(options, "genre")) {
-    tag->setGenre(getOptionString(options, "genre"));
-  }
-
-  if (hasOption(options, "year")) {
-    tag->setYear(getOptionInt(options, "year"));
-  }
-
-  if (hasOption(options, "track")) {
-    tag->setTrack(getOptionInt(options, "track"));
-  }
-
-  if (hasOption(options, "pictures")) {
-    auto pictures = options->Get(Nan::GetCurrentContext(), Nan::New("pictures").ToLocalChecked());
-    Local<Array> pics = Local<Array>::Cast(pictures.ToLocalChecked());
-    unsigned int plen = pics->Length();
-
-    TagLib::PictureMap picMap;
-    bool hasPics = false;
-
-    for (unsigned int i = 0; i < plen; i++) {
-      Local<v8::Object> imgObj = Handle<Object>::Cast(pics->Get(Nan::GetCurrentContext(), i).ToLocalChecked());
-
-      if (!hasOption(imgObj, "mimetype")) {
-        Nan::ThrowTypeError("mimetype required for each picture");
-        return;
-      }
-
-      if (!hasOption(imgObj, "picture")) {
-        Nan::ThrowTypeError("picture required for each item in pictures array");
-        return;
-      }
-
-      auto mimetype = getOptionString(imgObj, "mimetype");
-      auto picture = Nan::To<v8::Object>(
-        imgObj->Get(Nan::GetCurrentContext(), Nan::New("picture").ToLocalChecked()).ToLocalChecked()
-      );
-
-      if (!picture.IsEmpty() && node::Buffer::HasInstance(picture.ToLocalChecked())) {
-
-        char* buffer = node::Buffer::Data(picture.ToLocalChecked());
-        const size_t blen = node::Buffer::Length(picture.ToLocalChecked());
-        TagLib::ByteVector data(buffer, blen);
-
-        TagLib::Picture pic(data,
-          TagLib::Picture::FrontCover,
-          mimetype,
-          "Added with node-taglib2");
-
-        picMap.insert(pic);
-        hasPics = true;
-      }
-    }
-
-    if (hasPics) {
-      tag->setPictures(picMap);
-    }
-  }
-
-  f.save();
 
   info.GetReturnValue().Set(Nan::True());
 }
