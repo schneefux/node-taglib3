@@ -1,8 +1,6 @@
 # SYNOPSIS
-taglib version 2 bindings
 
-# BUILD STATUS
-[![Build status](https://ci.appveyor.com/api/projects/status/fkt7jiqubahuja5o?svg=true)](https://ci.appveyor.com/project/0x00A/node-taglib2)
+A fork of [node-taglib2](https://github.com/voltraco/node-taglib2) for Node 12, with support for non-standard properties.
 
 # INSTALLATION
 
@@ -22,29 +20,19 @@ ELECTRON=1 npm install
 ```
 
 ### WRITING TAGS
-Note that `track` will overwrite `tracknumber` if specified in the same write.
+
+Specify an object of tag names and tag entries to (over) write. Tag entries must be arrays of strings. Not all file formats support multiple entries.
+See the [taglib documentation](https://taglib.org/api/classTagLib_1_1PropertyMap.html) for details.
+
 
 ```js
 const taglib = require('taglib2')
-const mime = require('node-mime')
 const fs = require('fs')
 
 const props = {
-  artist: 'Howlin\' Wolf',
-  title: 'Evil is goin\' on',
-  album: 'Smokestack Lightnin\'',
-  comment: 'Chess Master Series',
-  genre: 'blues',
-  year: 1951,
-  track: 3,
-  tracknumber: '1/1',
-  discnumber: '1/1',
-  pictures: [
-    {
-      "mimetype": mime('./cover.jpg'),
-      "picture": fs.readFileSync('./cover.jpg')
-    } 
-  ],
+  artist: ['Howlin\' Wolf'],
+  title: ['Evil is goin\' on'],
+  my_own_special_attribute: ['datadatadata']
 }
 
 taglib.writeTagsSync('./file.mp3', props)
@@ -58,33 +46,11 @@ const tags = taglib.readTagsSync('./file.mp3')
 ```
 
 #### OUTPUT
-`tags.pictures` will be an array of buffers that contain image data.
 
 ```json
 {
-  "artist": "Howlin' Wolf",
-  "albumartist": "Howlin' Wolf",
-  "title": "Evil is goin' on",
-  "album": "Smokestack Lightnin'",
-  "comment": "Chess Master Series",
-  "composer": "Chester Burnett",
-  "genre": "blues",
-  "year": 1951,
-  "track": 3,
-  "tracknumber": "3/3",
-  "discnumber": "1/1",
-  "pictures": [
-    {
-      "mimetype": "image/jpeg",
-      "picture": <Buffer ff d8 ff e0 00 10 4a 46 49 46 00 01 ... >
-    } 
-  ],
-  "bitrate": 192,
-  "bpm": 120,
-  "samplerate": 44100,
-  "channels": 2,
-  "compilation": false,
-  "time": "1:30",
-  "length": 90
+  "ARTIST": ["Howlin' Wolf"],
+  "TITLE": [["Howlin' Wolf"],
+  "MY_OWN_SPECIAL_ATTRIBUTE": ["datadatadata"]
 }
 ```
