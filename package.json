@@ -12,10 +12,10 @@
     "rebuild": "node build.js"
   },
   "dependencies": {
-    "cmake-js": "^3.5.0",
-    "cross-spawn": "^5.1.0",
+    "cmake-js": "^6.1.0",
+    "cross-spawn": "^7.0.2",
     "nan": "^2.14.0",
-    "npm-run-path": "^2.0.2"
+    "npm-run-path": "^4.0.1"
   },
   "devDependencies": {
     "tape": "*"
