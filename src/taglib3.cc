@@ -94,13 +94,13 @@ NAN_METHOD(writeTagsSync) {
   }
 
   TagLib::FileRef f(audio_file.c_str());
-  TagLib::Tag *tag = f.tag();
-  TagLib::PropertyMap map = f.properties();
 
-  if (!tag) {
+  if (f.isNull()) {
     Nan::ThrowTypeError("Could not parse file");
     return;
   }
+
+  TagLib::PropertyMap map = f.file()->properties();
 
   // TODO type check
   Local<Array> property_names = options->GetOwnPropertyNames(Nan::GetCurrentContext()).ToLocalChecked();
@@ -121,8 +121,8 @@ NAN_METHOD(writeTagsSync) {
   }
 
   if (map.size() > 0) {
-    f.setProperties(map);
-    f.save();
+    f.file()->setProperties(map);
+    f.file()->save();
   }
 
   info.GetReturnValue().Set(Nan::True());
@@ -155,14 +155,13 @@ NAN_METHOD(readTagsSync) {
   }
 
   TagLib::FileRef f(audio_file.c_str());
-  TagLib::Tag *tag = f.tag();
-  TagLib::PropertyMap map = f.properties();
 
-  if (!tag || f.isNull()) {
+  if (f.isNull()) {
     Nan::ThrowTypeError("Could not parse file");
     return;
   }
 
+  TagLib::PropertyMap map = f.file()->properties();
   v8::Local<v8::Object> obj = Nan::New<v8::Object>();
   for (TagLib::PropertyMap::ConstIterator i = map.begin(); i != map.end(); ++i) {
     v8::Local<v8::Array> array = Nan::New<v8::Array>(i->second.size());
@@ -195,4 +194,4 @@ void Init(v8::Local<v8::Object> exports, v8::Local<v8::Value> module, void *) {
   );
 }
 
-NODE_MODULE(taglib2, Init)
+NODE_MODULE(taglib3, Init)
