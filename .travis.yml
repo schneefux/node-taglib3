@@ -1,11 +1,13 @@
-sudo: false
 language: node_js
 dist: bionic
-compiler:
-  - clang
-  - gcc
+os:
+  - linux
+  - osx
 node_js:
+  - "10"
+  - "11"
   - "12"
+  - "13"
 addons:
   apt:
     sources:
@@ -13,9 +15,3 @@ addons:
     packages:
       - cmake
       - cmake-data
-matrix:
-  include:
-    - node_js: "10"
-    - node_js: "11"
-    - node_js: "12"
-    - node_js: "13"
