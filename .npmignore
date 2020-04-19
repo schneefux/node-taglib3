@@ -1,0 +1,15 @@
+/tests
+/.travis.yml
+
+.DS_Store
+
+npn-debug.*
+*.log
+*.sw.*
+
+/taglib
+/tests/tmp
+/tests/fixtures/classical*
+/build
+/node_modules
+
