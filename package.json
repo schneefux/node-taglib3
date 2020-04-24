@@ -1,6 +1,6 @@
 {
   "name": "taglib3",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "taglib bindings",
   "repository": {
     "type": "git",
@@ -12,6 +12,7 @@
     "rebuild": "node build.js"
   },
   "dependencies": {
+    "async-lock": "^1.2.2",
     "cmake-js": "^6.1.0",
     "cross-spawn": "^7.0.2",
     "nan": "^2.14.0",

@@ -1,10 +1,15 @@
 const binding = require('./build/Release/taglib3')
+
+// FIXME implement this in native code (concurrent file access does not work)
+const AsyncLock = require('async-lock')
+const lock = new AsyncLock({ timeout: 60000 })
+
 // for some reason, the binding only works reliably with absolute paths
 const resolve = require('path').resolve
 
 exports.writeTags = (path, options, callback) => {
   path = resolve(path)
-  return binding.writeTags(path, options, callback)
+  return lock.acquire(path, (cb) => binding.writeTags(path, options, cb), callback)
 }
 
 exports.writeTagsSync = (path, options) => {
@@ -14,7 +19,7 @@ exports.writeTagsSync = (path, options) => {
 
 exports.readTags = (path, callback) => {
   path = resolve(path)
-  return binding.readTags(path, callback)
+  return lock.acquire(path, (cb) => binding.readTags(path, cb), callback)
 }
 
 exports.readTagsSync = path => {
