@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.com/schneefux/node-taglib3.svg?branch=master)](https://travis-ci.com/schneefux/node-taglib3)
 [![NPM Version](https://img.shields.io/npm/v/taglib3.svg?sanitize=true)](https://www.npmjs.com/package/taglib3)
 
-A rewrite of [node-taglib2](https://github.com/voltraco/node-taglib2) for Node 10 to 13 and taglib 1.11.1 with support for non-standard properties and a non-blocking API.
+A rewrite of [node-taglib2](https://github.com/voltraco/node-taglib2) for Node 10 to 13 and taglib 1.11.1 with support for non-standard properties, a non-blocking API and ID3 GEOB attributes.
 
 ## Installation
 
@@ -31,7 +31,6 @@ See the [taglib documentation](https://taglib.org/api/classTagLib_1_1PropertyMap
 
 ```js
 const taglib = require('taglib2')
-const path = require('path')
 // sync
 const tags = taglib.readTagsSync('file.mp3')
 // async
@@ -61,4 +60,21 @@ const props = {
 taglib.writeTagsSync('file.mp3', props)
 // async
 taglib.writeTags('file.mp3', props, (error, data) => console.log(error, data))
+```
+
+### GEOB
+
+Data is passed using base64. The keys are used as frame descriptions.
+Frames will be written using the mime type 'application/octet-stream', no encoding and no filename.
+
+```js
+const taglib = require('taglib2')
+console.log(taglib.readId3TagsSync('file.mp3'))
+taglib.writeId3TagsSync('file.mp3', { 'Another Binary Attribute': Buffer.from('hello mp3').toString('base64') })
+```
+
+```json
+{
+  "Binary Attribute": ["aGVsbG8gd29ybGQ="]
+}
 ```
