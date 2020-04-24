@@ -192,7 +192,7 @@ void WriteId3Tags(TagLib::FileRef f, TagLib::Map<TagLib::String, TagLib::String>
       id3v2->addFrame(geob);
     }
 
-    mpgfile->save();
+    mpgfile->save(0x0002, true, 3); // save as ID3 2.3, strip ID3v1 & APE
   }
 }
 
