@@ -1,6 +1,6 @@
 {
   "name": "taglib3",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "taglib bindings",
   "repository": {
     "type": "git",

@@ -27,22 +27,6 @@ ELECTRON=1 npm install
 Specify an object of tag names and tag entries to (over) write. Tag entries must be arrays of strings. Not all file formats support multiple entries.
 See the [taglib documentation](https://taglib.org/api/classTagLib_1_1PropertyMap.html) for details.
 
-
-```js
-const taglib = require('taglib2')
-
-const props = {
-  artist: ['Howlin\' Wolf'],
-  title: ['Evil is goin\' on'],
-  my_own_special_attribute: ['datadatadata']
-}
-
-// sync
-taglib.writeTagsSync('file.mp3', props)
-// async
-taglib.writeTags('file.mp3', props, (error, data) => console.log(error, data))
-```
-
 ### Reading tags
 
 ```js
@@ -58,6 +42,23 @@ const tags = taglib.readTags('file.mp3', (error, data) => console.log(error, dat
 {
   "ARTIST": ["Howlin' Wolf"],
   "TITLE": ["Howlin' Wolf"],
-  "MY_OWN_SPECIAL_ATTRIBUTE": ["datadatadata"]
+  "MY_OWN_SPECIAL_ATTRIBUTE": ["datadatadata"],
+  "DELETE_THIS": ["delete me"]
 }
+```
+
+```js
+const taglib = require('taglib2')
+
+const props = {
+  artist: ['Howlin\' Wolf'],
+  title: ['Evil is goin\' on'],
+  my_own_special_attribute: ['datadatadata'],
+  delete_this: []
+}
+
+// sync
+taglib.writeTagsSync('file.mp3', props)
+// async
+taglib.writeTags('file.mp3', props, (error, data) => console.log(error, data))
 ```

@@ -71,8 +71,10 @@ v8::Local<v8::Object> PropertyMapToObject(TagLib::PropertyMap map, v8::Local<v8:
 }
 
 // merge v8 object into property map
-TagLib::PropertyMap ObjectToPropertyMap(TagLib::PropertyMap map, v8::Local<v8::Object> props, v8::Local<v8::Context> context) {
+TagLib::PropertyMap ObjectToPropertyMap(v8::Local<v8::Object> props, v8::Local<v8::Context> context) {
   v8::Local<v8::Array> property_names = props->GetOwnPropertyNames(context).ToLocalChecked();
+  TagLib::PropertyMap *map = new TagLib::PropertyMap();
+
   for (int i = 0; i < property_names->Length(); ++i) {
     v8::Local<v8::String> key = property_names->Get(context, i).ToLocalChecked().As<v8::String>();
 
@@ -84,11 +86,24 @@ TagLib::PropertyMap ObjectToPropertyMap(TagLib::PropertyMap map, v8::Local<v8::O
       list.append(StringToTagLibString(value));
     }
 
-    map.erase(StringToTagLibString(key)); // will merge both lists if not erased
-    map.insert(StringToTagLibString(key), list);
+    map->insert(StringToTagLibString(key), list);
   }
 
-  return map;
+  return *map;
+}
+
+// merge two property maps, replacing existing map1 entries with the corresponding map1 entry
+TagLib::PropertyMap MergePropertyMaps(TagLib::PropertyMap map1, TagLib::PropertyMap map2) {
+  TagLib::PropertyMap *map = new TagLib::PropertyMap();
+
+  for (TagLib::PropertyMap::ConstIterator i = map1.begin(); i != map1.end(); ++i) {
+    map->replace(i->first, i->second);
+  }
+  for (TagLib::PropertyMap::ConstIterator i = map2.begin(); i != map2.end(); ++i) {
+    map->replace(i->first, i->second);
+  }
+
+  return *map;
 }
 
 TagLib::PropertyMap ReadTags(TagLib::FileRef f) {
@@ -104,12 +119,12 @@ void WriteTags(TagLib::FileRef f, TagLib::PropertyMap map) {
 
 class ReadTagsWorker : public Nan::AsyncWorker {
   public:
-    ReadTagsWorker(Nan::Callback *callback, const char* path)
+    ReadTagsWorker(Nan::Callback *callback, TagLib::String path)
       : Nan::AsyncWorker(callback), path(path) {}
   ~ReadTagsWorker() { }
 
   void Execute() {
-    TagLib::FileRef f(path, false);
+    TagLib::FileRef f(path.toCString(), false);
     if (f.isNull()) {
       this->SetErrorMessage("Could not parse file");
       return;
@@ -140,24 +155,26 @@ class ReadTagsWorker : public Nan::AsyncWorker {
   }
 
   private:
-    const char* path;
+    TagLib::String path;
     TagLib::PropertyMap result;
 };
 
 class WriteTagsWorker : public Nan::AsyncWorker {
   public:
-    WriteTagsWorker(Nan::Callback *callback, const char* path, TagLib::PropertyMap map)
+    WriteTagsWorker(Nan::Callback *callback, TagLib::String path, TagLib::PropertyMap map)
       : Nan::AsyncWorker(callback), path(path), map(map) {}
   ~WriteTagsWorker() { }
 
   void Execute() {
-    TagLib::FileRef f(path, false);
+    TagLib::FileRef f(path.toCString(), false);
     if (f.isNull()) {
       this->SetErrorMessage("Could not parse file");
       return;
     }
 
-    WriteTags(f, this->map);
+    TagLib::PropertyMap existingProperties = ReadTags(f);
+    TagLib::PropertyMap newProperties = MergePropertyMaps(existingProperties, this->map);
+    WriteTags(f, newProperties);
   }
 
   void HandleOKCallback() {
@@ -179,7 +196,7 @@ class WriteTagsWorker : public Nan::AsyncWorker {
   }
 
   private:
-    const char* path;
+    TagLib::String path;
     TagLib::PropertyMap map;
 };
 
@@ -202,15 +219,10 @@ NAN_METHOD(writeTags) {
   v8::Local<v8::Function> opt_callback = info[2].As<v8::Function>();
 
   TagLib::String path = StringToTagLibString(opt_path);
-  TagLib::FileRef f(path.toCString(), false);
-  if (!ValidateFile(f)) {
-    return;
-  }
-
-  TagLib::PropertyMap map = ObjectToPropertyMap(ReadTags(f), opt_props, context);
+  TagLib::PropertyMap map = ObjectToPropertyMap(opt_props, context);
 
   Nan::Callback *callback = new Nan::Callback(opt_callback);
-  AsyncQueueWorker(new WriteTagsWorker(callback, path.toCString(), map));
+  AsyncQueueWorker(new WriteTagsWorker(callback, path, map));
 }
 
 NAN_METHOD(writeTagsSync) {
@@ -234,8 +246,10 @@ NAN_METHOD(writeTagsSync) {
     return;
   }
 
-  TagLib::PropertyMap map = ObjectToPropertyMap(ReadTags(f), opt_props, context);
-  WriteTags(f, map);
+  TagLib::PropertyMap map = ObjectToPropertyMap(opt_props, context);
+  TagLib::PropertyMap existingProperties = ReadTags(f);
+  TagLib::PropertyMap newProperties = MergePropertyMaps(existingProperties, map);
+  WriteTags(f, newProperties);
 
   info.GetReturnValue().Set(Nan::True());
 }
@@ -258,7 +272,7 @@ NAN_METHOD(readTags) {
   TagLib::String path = StringToTagLibString(opt_path);
 
   Nan::Callback *callback = new Nan::Callback(opt_callback);
-  AsyncQueueWorker(new ReadTagsWorker(callback, path.toCString()));
+  AsyncQueueWorker(new ReadTagsWorker(callback, path));
 }
 
 NAN_METHOD(readTagsSync) {
