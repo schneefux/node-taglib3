@@ -64,13 +64,16 @@ taglib.writeTags('file.mp3', props, (error, data) => console.log(error, data))
 
 ### GEOB
 
-Data is passed using base64. The keys are used as frame descriptions.
-Frames will be written using the mime type 'application/octet-stream', no encoding and no filename.
+The keys are used to identify duplicate frames by their description, duplicates will be deleted.
+Data is passed using base64, encoded as `mimetype\x00filename\x00description\x00data` in Latin1 encoding.
 
 ```js
 const taglib = require('taglib2')
 console.log(taglib.readId3TagsSync('file.mp3'))
-taglib.writeId3TagsSync('file.mp3', { 'Another Binary Attribute': Buffer.from('hello mp3').toString('base64') })
+taglib.writeId3TagsSync('file.mp3', {
+  'Another Binary Attribute': Buffer.from('application/octet-stream\x00\x00Another Binary Attribute\x00hello mp3').toString('base64'),
+  'Delete this': '',
+})
 ```
 
 ```json

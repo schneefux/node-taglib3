@@ -55,6 +55,37 @@ bool ValidateCallback(v8::Local<v8::Value> callback) {
   return true;
 }
 
+// https://github.com/taglib/taglib/blob/79bb1428c0482966cdafd9b6e1127e98b4637fbf/taglib/mpeg/id3v2/id3v2frame.cpp#L92
+TagLib::ByteVector textDelimiter(TagLib::String::Type t)
+{
+  if(t == TagLib::String::UTF16 || t == TagLib::String::UTF16BE || t == TagLib::String::UTF16LE)
+    return TagLib::ByteVector(2, '\0');
+  else
+    return TagLib::ByteVector(1, '\0');
+}
+
+// https://github.com/taglib/taglib/blob/79bb1428c0482966cdafd9b6e1127e98b4637fbf/taglib/mpeg/id3v2/id3v2frame.cpp#L265
+TagLib::String readStringField(const TagLib::ByteVector &data, TagLib::String::Type encoding, int *position)
+{
+  int start = 0;
+
+  if(!position)
+    position = &start;
+
+  TagLib::ByteVector delimiter = textDelimiter(encoding);
+
+  int end = data.find(delimiter, *position, delimiter.size());
+
+  if(end < *position)
+    return TagLib::String();
+
+  TagLib::String str = TagLib::String(data.mid(*position, end - *position), encoding);
+
+  *position = end + delimiter.size();
+
+  return str;
+}
+
 // map -> v8 object
 v8::Local<v8::Object> MapToObject(TagLib::Map<TagLib::String, TagLib::String> map, v8::Local<v8::Context> context) {
   v8::Local<v8::Object> obj = Nan::New<v8::Object>();
@@ -150,7 +181,17 @@ TagLib::Map<TagLib::String, TagLib::String> ReadId3Tags(TagLib::FileRef f) {
     const TagLib::ID3v2::FrameList framelist = id3v2->frameListMap()["GEOB"];
     for (auto it = framelist.begin(); it != framelist.end(); it++) {
       TagLib::ID3v2::GeneralEncapsulatedObjectFrame* frame = dynamic_cast<TagLib::ID3v2::GeneralEncapsulatedObjectFrame*>(*it);
-      TagLib::ByteVector b64 = frame->render().toBase64();
+
+      TagLib::ByteVector data;
+      data.append(frame->mimeType().data(TagLib::String::Latin1));
+      data.append(textDelimiter(TagLib::String::Latin1));
+      data.append(frame->fileName().data(TagLib::String::Latin1));
+      data.append(textDelimiter(TagLib::String::Latin1));
+      data.append(frame->description().data(TagLib::String::Latin1));
+      data.append(textDelimiter(TagLib::String::Latin1));
+      data.append(frame->object());
+
+      TagLib::ByteVector b64 = data.toBase64();
       map.insert(frame->description(), TagLib::String(b64));
     }
   }
@@ -180,16 +221,20 @@ void WriteId3Tags(TagLib::FileRef f, TagLib::Map<TagLib::String, TagLib::String>
         }
       }
 
-      // append a GEOB with this key
-      TagLib::ByteVector b64 = TagLib::ByteVector::fromCString(i->second.toCString());
-      TagLib::ByteVector data = TagLib::ByteVector::fromBase64(b64);
+      if (i->second.size() > 0) {
+        // append a GEOB with this key
+        TagLib::ByteVector b64 = TagLib::ByteVector::fromCString(i->second.toCString());
+        TagLib::ByteVector data = TagLib::ByteVector::fromBase64(b64);
+        TagLib::ID3v2::GeneralEncapsulatedObjectFrame *geob = new TagLib::ID3v2::GeneralEncapsulatedObjectFrame();
 
-      TagLib::ID3v2::GeneralEncapsulatedObjectFrame *geob = new TagLib::ID3v2::GeneralEncapsulatedObjectFrame();
-      geob->setDescription(i->first);
-      geob->setObject(data);
-      geob->setMimeType(TagLib::String("application/octet-stream"));
+        int pos = 0;
+        geob->setMimeType(readStringField(data, TagLib::String::Latin1, &pos));
+        geob->setFileName(readStringField(data, TagLib::String::Latin1, &pos));
+        geob->setDescription(readStringField(data, TagLib::String::Latin1, &pos));
+        geob->setObject(data.mid(pos));
 
-      id3v2->addFrame(geob);
+        id3v2->addFrame(geob);
+      }
     }
 
     mpgfile->save(0x0002, true, 3); // save as ID3 2.3, strip ID3v1 & APE
