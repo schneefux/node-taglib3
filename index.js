@@ -1,4 +1,4 @@
-const binding = require('./build/Release/taglib3')
+const binding = require('./build/Release/taglib3.node')
 
 // FIXME implement this in native code (concurrent file access does not work)
 const AsyncLock = require('async-lock')
