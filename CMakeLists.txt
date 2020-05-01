@@ -66,9 +66,20 @@ include_directories(BEFORE ${CMAKE_JS_INC} ${CMAKE_SOURCE_DIR}/taglib/include)
 #
 # node-taglib3 specifics
 #
+
+# https://github.com/nodejs/node-addon-api/issues/269#issuecomment-455580129
+if(WIN32)
+  file (GLOB PLATFORM_SOURCE_FILES
+    "src/win_delay_load_hook.cpp"
+  )
+endif()
+
 file(GLOB SOURCE_FILES "src/*.cc" "src/*.h")
-add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
+add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${PLATFORM_SOURCE_FILES})
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
+if(WIN32)
+  set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/DELAYLOAD:node.exe" )
+endif()
 
 #
 # add TagLib as a dependency (after project has been defined)
