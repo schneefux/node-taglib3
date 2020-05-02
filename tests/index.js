@@ -7,49 +7,28 @@ const http = require('http')
 
 const FIXTURES_PATH = path.join(__dirname, '/fixtures')
 
-;(function setup () {
-  const flacfilesource = [
-    'http://www.eclassical.com',
-    '/custom/eclassical/files/BIS1447-002-flac_24.flac'
-  ].join('')
+test('sync write/read', assert => {
+  const audiopath = FIXTURES_PATH + '/sample-output å æ ø ö ä ù ó ð ✔️.mp3'
+  fs.writeFileSync(audiopath, fs.readFileSync(FIXTURES_PATH + '/sample.mp3'))
 
-  const flacfile = FIXTURES_PATH + '/classical å æ ø ö ä ù ó ð.flac'
+  assert.ok(!!fs.statSync(audiopath))
 
-  fs.stat(flacfile, (err, stat) => {
-    if (!err) return onReady()
+  assert.throws(() => {
+    taglib3.writeTagsSync()
+  }, 'not enough arguments')
 
-    const ws = fs.createWriteStream(flacfile)
-    http.get(flacfilesource, res => {
-      res.pipe(ws)
-      ws.on('end', onReady)
-    })
+  const r = taglib3.writeTagsSync(audiopath, {
+    artist: ['å æ ø ö ä ù ó ð ✔️ ärtist']
   })
-})()
 
-function onReady () {
-  test('sync write/read', assert => {
-    const audiopath = FIXTURES_PATH + '/sample-output å æ ø ö ä ù ó ð.mp3'
-    fs.writeFileSync(audiopath, fs.readFileSync(FIXTURES_PATH + '/sample.mp3'))
+  assert.ok(r)
 
-    assert.ok(!!fs.statSync(audiopath))
+  assert.throws(() => {
+    taglib3.readTagsSync()
+  }, 'not enough arguments')
 
-    assert.throws(() => {
-      taglib3.writeTagsSync()
-    }, 'not enough arguments')
+  const tags = taglib3.readTagsSync(audiopath)
 
-    const r = taglib3.writeTagsSync(audiopath, {
-      artist: ['å æ ø ö ä ù ó ð ärtist']
-    })
-
-    assert.ok(r)
-
-    assert.throws(() => {
-      taglib3.readTagsSync()
-    }, 'not enough arguments')
-
-    const tags = taglib3.readTagsSync(audiopath)
-
-    assert.equal(tags.ARTIST[0], 'å æ ø ö ä ù ó ð ärtist')
-    assert.end()
-  })
-}
+  assert.equal(tags.ARTIST[0], 'å æ ø ö ä ù ó ð ✔️ ärtist')
+  assert.end()
+})

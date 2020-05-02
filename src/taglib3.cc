@@ -22,6 +22,15 @@ TagLib::String StringToTagLibString(v8::Local<v8::String> s) {
   return TagLib::String(*Nan::Utf8String(s), TagLib::String::UTF8);
 }
 
+// TagLib String -> TagLib FileName
+TagLib::FileName StringToFileName(TagLib::String s) {
+#ifdef _WIN32
+  return s.toCWString();
+#else
+  return s.toCString(true);
+#endif
+}
+
 bool ValidatePath(v8::Local<v8::Value> path) {
   if (!path->IsString()) {
     Nan::ThrowTypeError("Expected a string");
@@ -248,7 +257,7 @@ class ReadTagsWorker : public Nan::AsyncWorker {
   ~ReadTagsWorker() { }
 
   void Execute() {
-    TagLib::FileRef f(path.toCString(), false);
+    TagLib::FileRef f(StringToFileName(path), false);
     if (f.isNull()) {
       this->SetErrorMessage("Could not parse file");
       return;
@@ -290,7 +299,7 @@ class ReadId3TagsWorker : public Nan::AsyncWorker {
   ~ReadId3TagsWorker() { }
 
   void Execute() {
-    TagLib::FileRef f(path.toCString(), false);
+    TagLib::FileRef f(StringToFileName(path), false);
     if (f.isNull()) {
       this->SetErrorMessage("Could not parse file");
       return;
@@ -332,7 +341,7 @@ class WriteTagsWorker : public Nan::AsyncWorker {
   ~WriteTagsWorker() { }
 
   void Execute() {
-    TagLib::FileRef f(path.toCString(), false);
+    TagLib::FileRef f(StringToFileName(path), false);
     if (f.isNull()) {
       this->SetErrorMessage("Could not parse file");
       return;
@@ -373,7 +382,7 @@ class WriteId3TagsWorker : public Nan::AsyncWorker {
   ~WriteId3TagsWorker() { }
 
   void Execute() {
-    TagLib::FileRef f(path.toCString(), false);
+    TagLib::FileRef f(StringToFileName(path), false);
     if (f.isNull()) {
       this->SetErrorMessage("Could not parse file");
       return;
@@ -446,7 +455,7 @@ NAN_METHOD(writeTagsSync) {
   v8::Local<v8::Object> opt_props = info[1].As<v8::Object>();
 
   TagLib::String path = StringToTagLibString(opt_path);
-  TagLib::FileRef f(path.toCString(), false);
+  TagLib::FileRef f(StringToFileName(path), false);
   if (!ValidateFile(f)) {
     return;
   }
@@ -500,7 +509,7 @@ NAN_METHOD(writeId3TagsSync) {
   v8::Local<v8::Object> opt_props = info[1].As<v8::Object>();
 
   TagLib::String path = StringToTagLibString(opt_path);
-  TagLib::FileRef f(path.toCString(), false);
+  TagLib::FileRef f(StringToFileName(path), false);
   if (!ValidateFile(f)) {
     return;
   }
@@ -548,7 +557,7 @@ NAN_METHOD(readTagsSync) {
 
   TagLib::String path = StringToTagLibString(opt_path);
 
-  TagLib::FileRef f(path.toCString(), false);
+  TagLib::FileRef f(StringToFileName(path), false);
   if (!ValidateFile(f)) {
     return;
   }
@@ -596,7 +605,7 @@ NAN_METHOD(readId3TagsSync) {
 
   TagLib::String path = StringToTagLibString(opt_path);
 
-  TagLib::FileRef f(path.toCString(), false);
+  TagLib::FileRef f(StringToFileName(path), false);
   if (!ValidateFile(f)) {
     return;
   }
