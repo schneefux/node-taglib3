@@ -208,6 +208,16 @@ TagLib::Map<TagLib::String, TagLib::String> ReadId3Tags(TagLib::FileRef f) {
   return map;
 }
 
+TagLib::Map<TagLib::String, TagLib::String> ReadAudioProperties(TagLib::FileRef f) {
+  TagLib::Map<TagLib::String, TagLib::String> map;
+
+  map.insert(TagLib::String("bitrate"), TagLib::String(std::to_string(f.audioProperties()->bitrate())));
+  map.insert(TagLib::String("channels"), TagLib::String(std::to_string(f.audioProperties()->channels())));
+  map.insert(TagLib::String("length"), TagLib::String(std::to_string(f.audioProperties()->length())));
+
+  return map;
+}
+
 void WriteTags(TagLib::FileRef f, TagLib::PropertyMap map) {
   if (map.size() > 0) {
     f.file()->setProperties(map);
@@ -290,6 +300,48 @@ class ReadTagsWorker : public Nan::AsyncWorker {
   private:
     TagLib::String path;
     TagLib::PropertyMap result;
+};
+
+class ReadAudioPropertiesWorker : public Nan::AsyncWorker {
+  public:
+    ReadAudioPropertiesWorker(Nan::Callback *callback, TagLib::String path)
+      : Nan::AsyncWorker(callback), path(path) {}
+  ~ReadAudioPropertiesWorker() { }
+
+  void Execute() {
+    TagLib::FileRef f(StringToFileName(path), true, TagLib::AudioProperties::Fast);
+    if (f.isNull()) {
+      this->SetErrorMessage("Could not parse file");
+      return;
+    }
+
+    this->result = ReadAudioProperties(f);
+  }
+
+  void HandleOKCallback() {
+    v8::Local<v8::Context> context = Nan::GetCurrentContext();
+
+    v8::Local<v8::Object> obj = MapToObject(this->result, context);
+    v8::Local<v8::Value> argv[2] = {
+      Nan::Null(),
+      obj
+    };
+
+    callback->Call(2, argv, async_resource);
+  }
+
+  void HandleErrorCallback() {
+    v8::Local<v8::Value> argv[2] = {
+      Nan::New<v8::String>(this->ErrorMessage()).ToLocalChecked(),
+      Nan::Null()
+    };
+
+    callback->Call(2, argv, async_resource);
+  }
+
+  private:
+    TagLib::String path;
+    TagLib::Map<TagLib::String, TagLib::String> result;
 };
 
 class ReadId3TagsWorker : public Nan::AsyncWorker {
@@ -568,6 +620,54 @@ NAN_METHOD(readTagsSync) {
   info.GetReturnValue().Set(obj);
 }
 
+NAN_METHOD(readAudioPropertiesSync) {
+  v8::Local<v8::Context> context = Nan::GetCurrentContext();
+
+  if (info.Length() != 1) {
+    Nan::ThrowTypeError("Expected 1 argument");
+    return;
+  }
+
+  if (!ValidatePath(info[0])) {
+    return;
+  }
+
+  v8::Local<v8::String> opt_path = info[0].As<v8::String>();
+
+  TagLib::String path = StringToTagLibString(opt_path);
+
+  TagLib::FileRef f(StringToFileName(path), true, TagLib::AudioProperties::Fast);
+  if (!ValidateFile(f)) {
+    return;
+  }
+  TagLib::Map<TagLib::String, TagLib::String> map = ReadAudioProperties(f);
+
+  v8::Local<v8::Object> obj = MapToObject(map, context);
+
+  info.GetReturnValue().Set(obj);
+}
+
+NAN_METHOD(readAudioProperties) {
+  v8::Local<v8::Context> context = Nan::GetCurrentContext();
+
+  if (info.Length() != 2) {
+    Nan::ThrowTypeError("Expected 2 arguments");
+    return;
+  }
+
+  if (!ValidatePath(info[0]) || !ValidateCallback(info[1])) {
+    return;
+  }
+
+  v8::Local<v8::String> opt_path = info[0].As<v8::String>();
+  v8::Local<v8::Function> opt_callback = info[1].As<v8::Function>();
+
+  TagLib::String path = StringToTagLibString(opt_path);
+
+  Nan::Callback *callback = new Nan::Callback(opt_callback);
+  AsyncQueueWorker(new ReadAudioPropertiesWorker(callback, path));
+}
+
 NAN_METHOD(readId3Tags) {
   v8::Local<v8::Context> context = Nan::GetCurrentContext();
 
@@ -650,6 +750,15 @@ void Init(v8::Local<v8::Object> exports, v8::Local<v8::Value> module, void *) {
   exports->Set(context,
     Nan::New("readId3Tags").ToLocalChecked(),
     Nan::New<v8::FunctionTemplate>(readId3Tags)->GetFunction(context).ToLocalChecked()
+  );
+
+  exports->Set(context,
+    Nan::New("readAudioPropertiesSync").ToLocalChecked(),
+    Nan::New<v8::FunctionTemplate>(readAudioPropertiesSync)->GetFunction(context).ToLocalChecked()
+  );
+  exports->Set(context,
+    Nan::New("readAudioProperties").ToLocalChecked(),
+    Nan::New<v8::FunctionTemplate>(readAudioProperties)->GetFunction(context).ToLocalChecked()
   );
 }
 

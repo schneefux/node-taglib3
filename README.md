@@ -30,7 +30,7 @@ See the [taglib documentation](https://taglib.org/api/classTagLib_1_1PropertyMap
 ### Reading tags
 
 ```js
-const taglib = require('taglib2')
+const taglib = require('taglib3')
 // sync
 const tags = taglib.readTagsSync('file.mp3')
 // async
@@ -47,7 +47,7 @@ const tags = taglib.readTags('file.mp3', (error, data) => console.log(error, dat
 ```
 
 ```js
-const taglib = require('taglib2')
+const taglib = require('taglib3')
 
 const props = {
   artist: ['Howlin\' Wolf'],
@@ -68,7 +68,7 @@ The keys are used to identify duplicate frames by their description, duplicates 
 Data is passed using base64, encoded as `mimetype\x00filename\x00description\x00data` in Latin1 encoding.
 
 ```js
-const taglib = require('taglib2')
+const taglib = require('taglib3')
 console.log(taglib.readId3TagsSync('file.mp3'))
 taglib.writeId3TagsSync('file.mp3', {
   'Another Binary Attribute': Buffer.from('application/octet-stream\x00\x00Another Binary Attribute\x00hello mp3').toString('base64'),
@@ -79,5 +79,20 @@ taglib.writeId3TagsSync('file.mp3', {
 ```json
 {
   "Binary Attribute": ["aGVsbG8gd29ybGQ="]
+}
+```
+
+### Audio Properties
+
+```js
+const taglib = require('taglib3')
+console.log(taglib.readAudioPropertiesSync('file.mp3'))
+```
+
+```json
+{
+  "bitrate": "192",
+  "channels": "2",
+  "length": "90"
 }
 ```

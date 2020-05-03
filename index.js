@@ -46,3 +46,13 @@ exports.readId3TagsSync = path => {
   path = resolve(path)
   return binding.readId3TagsSync(path)
 }
+
+exports.readAudioProperties = (path, callback) => {
+  path = resolve(path)
+  return lock.acquire(path, (cb) => binding.readAudioProperties(path, cb), callback)
+}
+
+exports.readAudioPropertiesSync = path => {
+  path = resolve(path)
+  return binding.readAudioPropertiesSync(path)
+}

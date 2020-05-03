@@ -30,5 +30,9 @@ test('sync write/read', assert => {
   const tags = taglib3.readTagsSync(audiopath)
 
   assert.equal(tags.ARTIST[0], 'å æ ø ö ä ù ó ð ✔️ ärtist')
+
+  const props = taglib3.readAudioPropertiesSync(audiopath)
+  assert.equal(props.length, '90')
+
   assert.end()
 })
