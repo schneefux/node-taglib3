@@ -20,6 +20,11 @@ addons:
     packages:
       - cmake
       - cmake-data
+before_install:
+- |
+  if [ $TRAVIS_OS_NAME = windows ]; then
+    export PATH=/c/program\ files/git/mingw64/libexec/git-core:$PATH
+  fi
 script:
 - npm run test
 - |
