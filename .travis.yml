@@ -3,6 +3,7 @@ dist: bionic
 os:
   - linux
   - osx
+  - windows
 node_js:
   - "10"
   - "12"
