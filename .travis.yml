@@ -31,12 +31,12 @@ script:
     npm run prebuild -- -t $target --arch="x64" -r electron
   done
 deploy:
+  - provider: releases
+    file_glob: true
+    file: prebuilds/*
+    overwrite: true
   - provider: npm
     edge: true
     on:
       branch: master
     email: schneefux+npm@schneefux.xyz
-  - provider: releases
-    file_glob: true
-    file: prebuilds/*
-    overwrite: true
