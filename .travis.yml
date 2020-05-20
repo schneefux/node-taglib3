@@ -15,3 +15,9 @@ addons:
     packages:
       - cmake
       - cmake-data
+deploy:
+  provider: npm
+  edge: true
+  on:
+    branch: master
+  email: schneefux+npm@schneefux.xyz
