@@ -38,5 +38,5 @@ deploy:
   - provider: npm
     edge: true
     on:
-      branch: master
+      tags: true
     email: schneefux+npm@schneefux.xyz
