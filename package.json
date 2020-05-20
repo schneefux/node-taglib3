@@ -8,17 +8,20 @@
   },
   "scripts": {
     "test": "tape tests",
-    "install": "node build.js",
-    "rebuild": "node build.js"
+    "install": "prebuild-install --verbose || node build.js",
+    "rebuild": "node build.js",
+    "prebuild": "prebuild --force --strip --verbose --backend cmake-js"
   },
   "dependencies": {
     "async-lock": "^1.2.2",
     "cmake-js": "^6.1.0",
     "cross-spawn": "^7.0.2",
     "nan": "^2.14.0",
-    "npm-run-path": "^4.0.1"
+    "npm-run-path": "^4.0.1",
+    "prebuild-install": "^5.3.3"
   },
   "devDependencies": {
+    "prebuild": "^10.0.0",
     "tape": "*"
   }
 }

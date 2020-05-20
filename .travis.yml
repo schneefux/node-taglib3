@@ -8,6 +8,12 @@ node_js:
   - "11"
   - "12"
   - "13"
+  - "14"
+env:
+  global:
+  - PREBUILD_TARGETS="10.0.0 12.0.0 14.0.0"
+  - PREBUILD_ELECTRON_TARGETS="7.0.0 8.0.0 9.0.0"
+  - ARCH="x64"
 addons:
   apt:
     sources:
@@ -15,9 +21,22 @@ addons:
     packages:
       - cmake
       - cmake-data
+script:
+- npm run test
+- |
+  for target in $PREBUILD_TARGETS; do
+    npm run prebuild -- -t $target --arch="x64"
+  done
+  for target in $PREBUILD_ELECTRON_TARGETS; do
+    npm run prebuild -- -t $target --arch="x64" -r electron
+  done
 deploy:
-  provider: npm
-  edge: true
-  on:
-    branch: master
-  email: schneefux+npm@schneefux.xyz
+  - provider: npm
+    edge: true
+    on:
+      branch: master
+    email: schneefux+npm@schneefux.xyz
+  - provider: releases
+    file_glob: true
+    file: prebuilds/*
+    overwrite: true
