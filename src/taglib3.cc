@@ -214,6 +214,7 @@ TagLib::Map<TagLib::String, TagLib::String> ReadAudioProperties(TagLib::FileRef 
   map.insert(TagLib::String("bitrate"), TagLib::String(std::to_string(f.audioProperties()->bitrate())));
   map.insert(TagLib::String("channels"), TagLib::String(std::to_string(f.audioProperties()->channels())));
   map.insert(TagLib::String("length"), TagLib::String(std::to_string(f.audioProperties()->length())));
+  map.insert(TagLib::String("samplerate"), TagLib::String(std::to_string(f.audioProperties()->sampleRate())));
 
   return map;
 }
